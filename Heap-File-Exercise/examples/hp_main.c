@@ -58,6 +58,6 @@ int main() {
   HeapFile_Create(FILE_NAME);
   insert_records();
   search_records();
-  
+
   BF_Close();
 }
