@@ -95,6 +95,28 @@ int HeapFile_Close(int file_handle, HeapFileHeader *hp_info)
 
 int HeapFile_InsertRecord(int file_handle, HeapFileHeader *hp_info, const Record record)
 {   
+  //periptwsh poy to heap file den exei kanena block dedomenwn
+  if(hp_info->blocks_num == 1 && hp_info->currentblockid == 0){
+      // dhmiourgia tou prwtou block dedomenwn
+      BF_Block *new_block;
+      BF_Block_Init(&new_block);
+      CALL_BF(BF_AllocateBlock(file_handle, new_block));
+      char* new_data = BF_Block_GetData(new_block);
+      // eisagwgh eggrafhs sto neo block
+      Record* rec_ptr = (Record*)(new_data);
+      memcpy(rec_ptr, &record, sizeof(Record));
+      // arxikopoihsh metadata tou neou block
+      HeapFileBlockMetadata *new_mdata = (HeapFileBlockMetadata*)(new_data + BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata));
+      new_mdata->record_count = 1;
+      new_mdata->next_block_id = -1; // arxika den yparxei epomeno block
+      hp_info->currentblockid = 1; // allagh tou current block id sto epomeno block
+      hp_info->blocks_num += 1; // auxisi tou arithmou twn blocks sto header
+      BF_Block_SetDirty(new_block);
+      CALL_BF(BF_UnpinBlock(new_block));
+      BF_Block_Destroy(&new_block);
+      return 1;
+  }
+
 BF_Block *block;
 BF_Block_Init(&block);
 BF_GetBlock(file_handle, hp_info->currentblockid, block);
@@ -137,6 +159,9 @@ int max_records = (BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata)) / sizeof(Recor
       new_mdata->next_block_id = -1; // arxika den yparxei epomeno block
       hp_info->currentblockid += 1; // allagh tou current block id sto epomeno block
       hp_info->blocks_num += 1; // auxisi tou arithmou twn blocks sto header
+      BF_Block_SetDirty(new_block);
+      CALL_BF(BF_UnpinBlock(new_block));
+      BF_Block_Destroy(&new_block);
       return 1;
     }
   else{

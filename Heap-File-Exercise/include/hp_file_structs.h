@@ -37,6 +37,7 @@ typedef struct HeapFileBlockMetadata {
  * @brief Iterator for scanning through records in a heap file
  */
 typedef struct HeapFileIterator{
+    
 } HeapFileIterator;
 
 #endif /* HP_FILE_STRUCTS_H */
