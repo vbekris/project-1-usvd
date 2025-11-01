@@ -1,0 +1,8 @@
+1. prospathoume na kanoume thn diaxeirisi ths endiameshs se kathe allagh toy HeapFile header kai twn metadata tou block an afto einai efikto.
+giafto kai h HeapFileClose den asxoleitai me headers kai malakies.
+
+2.
+
+3.
+
+4.

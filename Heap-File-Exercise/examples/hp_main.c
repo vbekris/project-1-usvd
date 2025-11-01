@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "bf.h"
-#include "hp_file_structs.h"
-#include "hp_file_funcs.h"
+#include "../include/bf.h"
+#include "../include/hp_file_structs.h"
+#include "../include/hp_file_funcs.h"
 
 #define RECORDS_NUM 10000 // you can change it if you want
 #define FILE_NAME "data.db"
@@ -58,6 +58,6 @@ int main() {
   HeapFile_Create(FILE_NAME);
   insert_records();
   search_records();
-
+  
   BF_Close();
 }
