@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/bf.h"
-#include "../include/hp_file_structs.h"
-#include "../include/record.h"
+#include "bf.h"
+#include "hp_file_structs.h"
+#include "record.h"
+#include "hp_file_funcs.h"
 
 #define CALL_BF(call)         \
   {                           \
