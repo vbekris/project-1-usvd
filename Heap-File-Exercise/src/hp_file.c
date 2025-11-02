@@ -46,7 +46,7 @@ int HeapFile_Create(const char* fileName)
   CALL_BF(BF_UnpinBlock(headerblock));
 
   //απελευθέρωση του μπλοκ απο την μνήμη αφού εχει αποθηκευτει
-  BF_Block_Destroy(&headerblock);
+  BF_BlSock_Destroy(&headerblock);
 
   //κλείσιμο του ααρχείου
   CALL_BF(BF_CloseFile(filehandler));
