@@ -147,8 +147,7 @@ int max_records = (BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata)) / sizeof(Recor
       Record* rec_ptr = (Record*)(data + mdata->record_count * sizeof(Record));
       memcpy(rec_ptr, &record, sizeof(Record));
       mdata->record_count += 1;
-      mdata->next_block_id = -1; // den yparxei epomeno block
-
+      
       BF_Block_SetDirty(block);
       CALL_BF(BF_UnpinBlock(block));
       BF_Block_Destroy(&block);
@@ -246,9 +245,12 @@ int HeapFile_GetNextRecord(    HeapFileIterator* heap_iterator, Record** record)
       }
          heap_iterator->current_block += 1;
          heap_iterator->current_record = 1;
+        CALL_BF(BF_UnpinBlock(block));
+        BF_Block_Destroy(&block);
   }
 
 // den vrethike alli eggrafh me to id pou psaxnoume
+
   *record = NULL;
   return 0;
 
