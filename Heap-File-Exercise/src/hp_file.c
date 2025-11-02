@@ -36,7 +36,8 @@ int HeapFile_Create(const char* fileName)
   char* tmp = BF_Block_GetData(headerblock);
   HeapFileHeader *header = (HeapFileHeader*) tmp;
   header->blocks_num = 1; //το μπλοκ του header
-  header->currentblockid = 0; // invalid τιμη καθως ακομα δεν υπαρχει block δεδομενων
+  header->currentblockid = -1; // invalid τιμη καθως ακομα δεν υπαρχει block δεδομενων
+  strcpy(header->file_type, "heap"); //οριζουμε τον τυπο του αρχειου ως heap
   
   //το block γινεται dirty αφου υπέστη αλλαγες
   //και υστερα unpin  αφου ολοκληρώσαμε τις διεργασιες, για να αποθηκευτουν οι αλλαγες στο αρχειο
@@ -96,7 +97,7 @@ int HeapFile_Close(int file_handle, HeapFileHeader *hp_info)
 int HeapFile_InsertRecord(int file_handle, HeapFileHeader *hp_info, const Record record)
 {   
   //periptwsh poy to heap file den exei kanena block dedomenwn
-  if(hp_info->blocks_num == 1 && hp_info->currentblockid == 0){
+  if(hp_info->blocks_num == 1 && hp_info->currentblockid == -1){
       // dhmiourgia tou prwtou block dedomenwn
       BF_Block *new_block;
       BF_Block_Init(&new_block);
