@@ -37,7 +37,13 @@ typedef struct HeapFileBlockMetadata {
  * @brief Iterator for scanning through records in a heap file
  */
 typedef struct HeapFileIterator{
-    
+    int file_handle; //Handle of the heap file to iterate over
+    HeapFileHeader* header_info; //Pointer to heap file metadata
+    int search_id; // Record ID to filter during iteration
+    int current_block; //το εξεταζόμενο μπλοκ κατά την αναζητηση
+    int current_record; // η εξεταζόμενη εγγραφή
+
+
 } HeapFileIterator;
 
 #endif /* HP_FILE_STRUCTS_H */

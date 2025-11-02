@@ -28,7 +28,7 @@ int HeapFile_Create(const char* fileName)
 
   //Δημιουργουμε το πρώτο Block για να αποθηκευσουμε εκεί το header του heap
   BF_Block *headerblock;
-  BF_Block_Init(headerblock); //δημιουργια του μπλοκ
+  BF_Block_Init(&headerblock); //δημιουργια του μπλοκ
 
   CALL_BF(BF_AllocateBlock(filehandler, headerblock)); // ενταξη του στο heap
   
@@ -44,7 +44,7 @@ int HeapFile_Create(const char* fileName)
   CALL_BF(BF_UnpinBlock(headerblock));
 
   //απελευθέρωση του μπλοκ απο την μνήμη αφού εχει αποθηκευτει
-  BF_Block_Destroy(headerblock);
+  BF_Block_Destroy(&headerblock);
 
   //κλείσιμο του ααρχείου
   CALL_BF(BF_CloseFile(filehandler));
@@ -114,12 +114,24 @@ int HeapFile_InsertRecord(int file_handle, HeapFileHeader *hp_info, const Record
       BF_Block_SetDirty(new_block);
       CALL_BF(BF_UnpinBlock(new_block));
       BF_Block_Destroy(&new_block);
+
+      // Ενημέρωση header block
+      BF_Block *header_block;
+      BF_Block_Init(&header_block);
+      CALL_BF(BF_GetBlock(file_handle, 0, header_block));
+      char* header_data = BF_Block_GetData(header_block);
+      memcpy(header_data, hp_info, sizeof(HeapFileHeader));
+      BF_Block_SetDirty(header_block);
+      CALL_BF(BF_UnpinBlock(header_block));
+      BF_Block_Destroy(&header_block);
+
       return 1;
   }
 
+
 BF_Block *block;
 BF_Block_Init(&block);
-BF_GetBlock(file_handle, hp_info->currentblockid, block);
+CALL_BF(BF_GetBlock(file_handle, hp_info->currentblockid, block));
 char* data = BF_Block_GetData(block);
 
 
@@ -138,6 +150,17 @@ int max_records = (BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata)) / sizeof(Recor
       BF_Block_SetDirty(block);
       CALL_BF(BF_UnpinBlock(block));
       BF_Block_Destroy(&block);
+
+      // Ενημέρωση header block
+      BF_Block *header_block;
+      BF_Block_Init(&header_block);
+      CALL_BF(BF_GetBlock(file_handle, 0, header_block));
+      char* header_data = BF_Block_GetData(header_block);
+      memcpy(header_data, hp_info, sizeof(HeapFileHeader));
+      BF_Block_SetDirty(header_block);
+      CALL_BF(BF_UnpinBlock(header_block));
+      BF_Block_Destroy(&header_block);
+
       return 1;
   }
   if(max_records - mdata->record_count ==0 ){
@@ -162,6 +185,17 @@ int max_records = (BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata)) / sizeof(Recor
       BF_Block_SetDirty(new_block);
       CALL_BF(BF_UnpinBlock(new_block));
       BF_Block_Destroy(&new_block);
+
+      // Ενημέρωση header block
+      BF_Block *header_block;
+      BF_Block_Init(&header_block);
+      CALL_BF(BF_GetBlock(file_handle, 0, header_block));
+      char* header_data = BF_Block_GetData(header_block);
+      memcpy(header_data, hp_info, sizeof(HeapFileHeader));
+      BF_Block_SetDirty(header_block);
+      CALL_BF(BF_UnpinBlock(header_block));
+      BF_Block_Destroy(&header_block);
+
       return 1;
     }
   else{
@@ -172,17 +206,50 @@ int max_records = (BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata)) / sizeof(Recor
     }
 }
 
-
 HeapFileIterator HeapFile_CreateIterator(    int file_handle, HeapFileHeader* header_info, int id)
 {
+
   HeapFileIterator out;
+  out.file_handle = file_handle;
+  out.header_info = header_info;
+  out.search_id = id;
+  out.current_block = 1;
+  out.current_record = 1; //η αναζητηση/προσπελαση θα ξεκινησει απο την πρωτη εγγραφη του πρωτου μπλοκ(οχι το μπλοκ[0])
+
   return out;
 }
 
 
 int HeapFile_GetNextRecord(    HeapFileIterator* heap_iterator, Record** record)
 {
-    * record=NULL;
-    return 1;
+
+  while(heap_iterator->current_block < heap_iterator->header_info->blocks_num){
+      BF_Block *block;
+      BF_Block_Init(&block);
+      CALL_BF(BF_GetBlock(heap_iterator->file_handle, heap_iterator->current_block, block));
+      char* data = BF_Block_GetData(block);
+      HeapFileBlockMetadata *mdata = (HeapFileBlockMetadata*)(data + BF_BLOCK_SIZE - sizeof(HeapFileBlockMetadata));
+      while(heap_iterator->current_record <= mdata->record_count){
+          Record* rec_ptr = (Record*)(data + (heap_iterator->current_record - 1) * sizeof(Record)); //-1 giati to current_record arxizei apo 1
+          if(rec_ptr->id == heap_iterator->search_id || heap_iterator->search_id == -1){
+              *record = malloc(sizeof(Record));
+              memcpy(*record, rec_ptr, sizeof(Record));
+              heap_iterator->current_record += 1;
+              BF_Block_SetDirty(block);
+              CALL_BF(BF_UnpinBlock(block));
+              BF_Block_Destroy(&block);
+              return 1;
+          }
+          heap_iterator->current_record += 1;
+      }
+         heap_iterator->current_block += 1;
+         heap_iterator->current_record = 1;
+  }
+
+// den vrethike alli eggrafh me to id pou psaxnoume
+  *record = NULL;
+  return 0;
+
+  // me afti tin ilopoihsh den borw na kanw free to record mes sth sunartisi. prepei na to kanei o kalwntas
 }
 
